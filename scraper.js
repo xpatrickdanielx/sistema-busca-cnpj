@@ -13,9 +13,6 @@ const db = require('./database');
 // ============================================================
 // BLOCO 2: FUNÇÃO PARA EXTRAIR DADOS DE UM SITE EXEMPLO
 // ============================================================
-// Neste exemplo, vamos buscar produtos de uma página de exemplo
-// Você pode adaptar para qualquer site que quiser
-// ============================================================
 
 async function coletarDados() {
     try {
