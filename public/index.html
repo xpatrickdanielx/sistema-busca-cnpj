@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Consulta Rápida</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 24px;
+            padding: 48px 40px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+            animation: fadeIn 0.6s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .container h1 {
+            font-size: 28px;
+            color: #1a2634;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .container .subtitulo {
+            color: #6b7a8a;
+            font-size: 16px;
+            margin-bottom: 32px;
+        }
+
+        .busca-area {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .busca-area input {
+            flex: 1;
+            padding: 16px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 14px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #f8fafc;
+        }
+
+        .busca-area input:focus {
+            outline: none;
+            border-color: #2a7de1;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(42, 125, 225, 0.1);
+        }
+
+        .busca-area button {
+            padding: 16px 32px;
+            background: #2a7de1;
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .busca-area button:hover {
+            background: #1a5fb4;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(42, 125, 225, 0.3);
+        }
+
+        .busca-area button:active {
+            transform: scale(0.98);
+        }
+
+        #resultados {
+            border-top: 2px solid #f0f4fa;
+            padding-top: 24px;
+            min-height: 100px;
+        }
+
+        .item-resultado {
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border-left: 4px solid #2a7de1;
+            transition: all 0.2s ease;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .item-resultado:hover {
+            background: #f1f5f9;
+            transform: translateX(4px);
+        }
+
+        .item-resultado .nome {
+            font-weight: 600;
+            color: #1a2634;
+            font-size: 17px;
+        }
+
+        .item-resultado .descricao {
+            color: #4a5a6a;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .item-resultado .categoria {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 4px 12px;
+            background: #e2e8f0;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #4a5a6a;
+            font-weight: 500;
+        }
+
+        .mensagem-vazia {
+            text-align: center;
+            color: #8a9aa8;
+            padding: 40px 0;
+        }
+
+        .mensagem-vazia .icone {
+            font-size: 48px;
+            display: block;
+            margin-bottom: 16px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 30px 0;
+            color: #2a7de1;
+        }
+
+        .contador {
+            font-size: 14px;
+            color: #6b7a8a;
+            margin-bottom: 16px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 24px 20px;
+            }
+            .busca-area {
+                flex-direction: column;
+            }
+            .container h1 {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Sistema de Consulta</h1>
+        <p class="subtitulo">Digite um termo para buscar nos registros</p>
+
+        <div class="busca-area">
+            <input type="text" id="campoBusca" placeholder="Ex: cliente, produto, tecnologia..." autofocus />
+            <button id="botaoBuscar">Pesquisar</button>
+        </div>
+
+        <div id="resultados">
+            <div class="mensagem-vazia">
+                <span class="icone">👆</span>
+                <p>Digite um termo e clique em Pesquisar</p>
+                <p style="font-size:13px; margin-top:8px;">ou pressione Enter</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const campoBusca = document.getElementById('campoBusca');
+        const botaoBuscar = document.getElementById('botaoBuscar');
+        const divResultados = document.getElementById('resultados');
+        const API_URL = 'http://localhost:3000/buscar';
+
+        async function realizarBusca() {
+            const termo = campoBusca.value.trim();
+            
+            if (!termo) {
+                divResultados.innerHTML = `
+                    <div class="mensagem-vazia">
+                        <span class="icone">✏️</span>
+                        <p>Digite algo para pesquisar</p>
+                    </div>
+                `;
+                return;
+            }
+
+            divResultados.innerHTML = `
+                <div class="loading">
+                    ⏳ <strong>Buscando...</strong>
+                </div>
+            `;
+
+            try {
+                const resposta = await fetch(`${API_URL}?q=${encodeURIComponent(termo)}`);
+                
+                if (!resposta.ok) {
+                    throw new Error('Erro na requisição');
+                }
+
+                const dados = await resposta.json();
+
+                if (!Array.isArray(dados)) {
+                    throw new Error('Formato de dados inválido');
+                }
+
+                if (dados.length === 0) {
+                    divResultados.innerHTML = `
+                        <div class="mensagem-vazia">
+                            <span class="icone">😕</span>
+                            <p>Nenhum resultado encontrado para "<strong>${termo}</strong>"</p>
+                            <p style="font-size:13px; margin-top:8px;">Tente outro termo</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = `
+                    <div class="contador">
+                        📊 ${dados.length} resultado${dados.length > 1 ? 's' : ''} encontrado${dados.length > 1 ? 's' : ''}
+                    </div>
+                `;
+
+                dados.forEach((item, index) => {
+                    html += `
+                        <div class="item-resultado">
+                            <div class="nome">${index + 1}. ${item.nome || 'Sem nome'}</div>
+                            ${item.descricao ? `<div class="descricao">${item.descricao}</div>` : ''}
+                            ${item.categoria ? `<span class="categoria">🏷️ ${item.categoria}</span>` : ''}
+                        </div>
+                    `;
+                });
+
+                divResultados.innerHTML = html;
+
+            } catch (erro) {
+                console.error('Erro:', erro);
+                divResultados.innerHTML = `
+                    <div class="mensagem-vazia">
+                        <span class="icone">❌</span>
+                        <p>Erro ao buscar dados</p>
+                        <p style="font-size:13px; margin-top:8px; color:#e74c3c;">
+                            ${erro.message}
+                        </p>
+                    </div>
+                `;
+            }
+        }
+
+        botaoBuscar.addEventListener('click', realizarBusca);
+
+        campoBusca.addEventListener('keypress', (evento) => {
+            if (evento.key === 'Enter') {
+                evento.preventDefault();
+                realizarBusca();
+            }
+        });
+
+        let temporizadorBusca;
+        campoBusca.addEventListener('input', () => {
+            clearTimeout(temporizadorBusca);
+            temporizadorBusca = setTimeout(() => {
+                if (campoBusca.value.trim().length >= 2) {
+                    realizarBusca();
+                }
+            }, 500);
+        });
+
+        console.log('✅ Sistema de Consulta carregado com sucesso!');
+    </script>
+</body>
+</html>
